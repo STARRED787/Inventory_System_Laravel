@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Item;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -11,7 +12,8 @@ class ItemController extends Controller
      */
     public function index()
     {
-        return view('items.index');
+        $items = Item::all();
+        return view('items.index', compact('items'));
     }
 
     /**
@@ -27,7 +29,14 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'required|string|max:200',
+            'quantity' => 'required|integer',
+            'price' => 'required|numeric|min:0',
+        ]);
+        Item::create($request->all());
+        return redirect()->route('items.index')->with('success', 'Item created successfully.');
     }
 
     /**
@@ -35,7 +44,8 @@ class ItemController extends Controller
      */
     public function show(string $id)
     {
-        return view('items.show');
+        $item = Item::find($id);
+        return view('items.show', compact('item'));
     }
 
     /**
@@ -43,7 +53,8 @@ class ItemController extends Controller
      */
     public function edit(string $id)
     {
-        return view('items.edit');
+        $item = Item::find($id);
+        return view('items.edit', compact('item'));
     }
 
     /**
@@ -51,7 +62,22 @@ class ItemController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        // Validate the incoming request data
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'required|string|max:200',
+            'quantity' => 'required|integer',
+            'price' => 'required|numeric|min:0',
+        ]);
+
+        // Find the item by ID or fail with a 404 error if not found
+        $item = Item::findOrFail($id);
+
+        // Update the item with validated data
+        $item->update($validatedData);
+
+        // Redirect to a route (e.g., index) with a success message
+        return redirect()->route('items.index')->with('success', 'Item updated successfully.');
     }
 
     /**
@@ -59,6 +85,8 @@ class ItemController extends Controller
      */
     public function destroy(string $id)
     {
-        return view('items.destroy');
+        $item = Item::find($id);
+        $item->delete();
+        return redirect()->route('items.index')->with('success', 'Item deleted successfully.');
     }
 }
